@@ -71,31 +71,46 @@ public class MainActivity extends BaseActivity {
                     public void run() {
                         //handler 发送 Bitmap对象
                         Bitmap bitmap = null;
-                        HttpURLConnection urlConnection = null;
-                        BufferedInputStream in = null;
 
                         String uriString = "http://b.hiphotos.baidu.com/zhidao/pic/item/a6efce1b9d16fdfafee0cfb5b68f8c5495ee7bd8.jpg";
-                        try {
-                            Log.d("w", "hashkey");
-                            bitmap = mMemryCache.get(hashKeyFormUrl(uriString));
-                            if (bitmap == null) {
-                                Log.d("w", "from uriString");
-                                URL url = new URL(uriString);
-                                urlConnection = (HttpURLConnection) url.openConnection();
-                                in = new BufferedInputStream(urlConnection.getInputStream());
-                                bitmap = BitmapFactory.decodeStream(in);
-                                mMemryCache.put(hashKeyFormUrl(uriString), bitmap);
-                            }
-                            handler.obtainMessage(1,bitmap).sendToTarget();
-                        } catch (MalformedURLException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        Log.d("w", "hashkey");
+                        bitmap = mMemryCache.get(hashKeyFormUrl(uriString));
+                        if (bitmap == null) {
+                            bitmap = downloadBitmapFromUri(uriString);
+                            Log.d("w", "from uriString");
+                            handler.obtainMessage(1, bitmap).sendToTarget();
                         }
-                    }
-                });
+                }});
                 thread.start();
+            }
         }
+
+    private Bitmap downloadBitmapFromUri(String uriString) {
+        Bitmap bitmap = null;
+        HttpURLConnection urlConnection = null;
+        BufferedInputStream in = null;
+
+        try {
+            final URL url = new URL(uriString);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            in = new BufferedInputStream(urlConnection.getInputStream());
+            bitmap = BitmapFactory.decodeStream(in);
+            mMemryCache.put(hashKeyFormUrl(uriString), bitmap);
+        } catch (final IOException e) {
+            Log.e("w", "Error in downloadBitmap: " + e);
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return bitmap;
     }
 
     @Override
