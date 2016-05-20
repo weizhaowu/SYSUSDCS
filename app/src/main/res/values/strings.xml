@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">SYSUSDCS</string>
+    <string name="Student">学生事务</string>
+    <string name="Postgraduate">研究生教务</string>
+    <string name="Undergraduate">本科生教务</string>
+    <string name="College">学院动态</string>
 </resources>

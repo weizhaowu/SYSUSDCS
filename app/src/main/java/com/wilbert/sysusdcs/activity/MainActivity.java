@@ -8,28 +8,28 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.util.LruCache;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-
 import com.wilbert.sysusdcs.R;
+import com.wilbert.sysusdcs.adapter.TopicPagerAdapter;
 import com.wilbert.sysusdcs.network.DiskLruCache;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.Buffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends BaseActivity {
     public static final int GET_BITMAP = 1234;
@@ -47,14 +47,12 @@ public class MainActivity extends BaseActivity {
 
     DiskLruCache diskLruCache;
 
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            Log.d("w", "set the bitmap");
-            Bitmap bitmap = (Bitmap) msg.obj;
-            imageView.setImageBitmap(bitmap);
-            }
-        };
+
+    private ViewPager viewPager;
+    private PagerAdapter pagerAdapter;
+
+    private List<String> topicList;
+    private TabLayout tabLayout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,14 +61,10 @@ public class MainActivity extends BaseActivity {
         initData();
     }
 
-    private ImageView imageView;
-    private Button button;
     @Override
     void initView() {
-        imageView = (ImageView)findViewById(R.id.imageView);
-        button = (Button)findViewById(R.id.testButton);
-        button.setOnClickListener(this);
-    }
+            viewPager = (ViewPager)findViewById(R.id.viewPager);
+        }
 
     @Override
     void initData() {
@@ -83,39 +77,25 @@ public class MainActivity extends BaseActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        topicList = new ArrayList<>();
+        topicList.add(getString(R.string.College));
+        topicList.add(getString(R.string.Postgraduate));
+        topicList.add(getString(R.string.Undergraduate));
+        topicList.add(getString(R.string.Student));
+
+        pagerAdapter = new TopicPagerAdapter(getSupportFragmentManager(), topicList);
+        viewPager.setAdapter(pagerAdapter);
+
+        tabLayout = (TabLayout)findViewById(R.id.tabLayout);
+        tabLayout.setupWithViewPager(viewPager);
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
-            case R.id.testButton:
-                Thread thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //handler 发送 Bitmap对象
-                        Bitmap bitmap = null;
 
-                        String uriString = "http://b.hiphotos.baidu.com/zhidao/pic/item/a6efce1b9d16fdfafee0cfb5b68f8c5495ee7bd8.jpg";
-                        bitmap = mMemryCache.get(hashKeyFormUrl(uriString));
-                        if (bitmap == null) {
-                            try {
-                                bitmap = getBitmapFromDisk(uriString);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                        if (bitmap == null) {
-                            try {
-                                bitmap = downloadBitmapFromUri(uriString);
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                            handler.obtainMessage(1, bitmap).sendToTarget();
-                        }
-                }});
-                thread.start();
-            }
         }
+    }
 
     private Bitmap getBitmapFromDisk(String uriString) throws IOException {
         Bitmap bitmap = null;
@@ -285,4 +265,14 @@ public class MainActivity extends BaseActivity {
 
         return new File(cachePath + File.separator + uniqueName);
     }
+    @Override
+     public void onBackPressed() {
+        if(tabLayout.getSelectedTabPosition() != 0) {
+            TabLayout.Tab tab = tabLayout.getTabAt(0);
+            tab.select();
+            return;
+        } else {
+            super.onBackPressed();
+        }
+     }
 }
